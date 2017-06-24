@@ -1,17 +1,36 @@
-FROM schickling/rust
+FROM debian:jessie
 MAINTAINER Felix Tripier
+
+ENV RUST_VERSION=1.18.0                                                                                 \
+    RUST_TARGET=x86_64-unknown-linux-gnu
+
+# install pagkages
+RUN apt-get update                                                                                  && \
+    apt-get install -y --no-install-recommends build-essential curl ca-certificates git gdb         && \
+# install rust binaries
+    cd /tmp                                                                                         && \
+    curl -sO https://static.rust-lang.org/dist/rust-$RUST_VERSION-$RUST_TARGET.tar.gz               && \
+    tar -xvzf rust-$RUST_VERSION-$RUST_TARGET.tar.gz                                                && \
+    ./rust-$RUST_VERSION-$RUST_TARGET/install.sh --without=rust-docs                                && \
+# install rust sources
+    curl -sO https://static.rust-lang.org/dist/rustc-$RUST_VERSION-src.tar.gz                       && \
+    tar -xvzf rustc-$RUST_VERSION-src.tar.gz                                                        && \
+    cd rustc-$RUST_VERSION-src                                                                      && \
+    rm -rf src/llvm src/test src/compiler-rt                                                        && \
+    mkdir -p /usr/local/src/rust                                                                    && \
+    mv src /usr/local/src/rust/                                                                     && \
+# fix permissions
+    find /usr/local/src/rust -type d -exec chmod a+x {} \;                                          && \
+    chmod -R a+r /usr/local/src/rust
 
 ADD fs/ /
 
 # install pagkages
-RUN apt-get update                                                          && \
-    apt-get install -y ncurses-dev libtolua-dev exuberant-ctags                \
-        git make bash-completion                                            && \
+RUN apt-get install -y ncurses-dev libtolua-dev exuberant-ctags                \
+        git make                                                            && \
     ln -s /usr/include/lua5.2/ /usr/include/lua                             && \
     ln -s /usr/lib/x86_64-linux-gnu/liblua5.2.so /usr/lib/liblua.so         && \
     cd /tmp                                                                 && \
-# bash completion for cargo
-    cp /usr/local/etc/bash_completion.d/* /etc/bash_completion.d/           && \
 # build and install vim
     git clone https://github.com/vim/vim.git                                && \
     cd vim                                                                  && \
