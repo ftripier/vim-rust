@@ -1,5 +1,5 @@
-FROM mbrt/rust
-MAINTAINER Michele Bertasi
+FROM schickling/rust
+MAINTAINER Felix Tripier
 
 ADD fs/ /
 
